@@ -372,7 +372,7 @@ docker run -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" natal
 helm install k8s-api-metrics ./charts/k8s-api-metrics -n k8s-api-metrics --create-namespace
 
 # Verifique os pods
-kubectl get pods -n k8s-api-metrics
+kubectl get pods -n k8s-api-metricstrimando
 
 # Port-forward
 kubectl port-forward svc/k8s-api-metrics-k8s-api-metrics 8080:8080 -n k8s-api-metrics
@@ -391,4 +391,4 @@ curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/
 
 ## Licença
 
-Este projeto está licenciado sob [inserir licença aqui] - veja o arquivo LICENSE para detalhes.
+Este projeto está licenciado sob [GNU GENERAL PUBLIC LICENSE] - veja o arquivo LICENSE para detalhes.
