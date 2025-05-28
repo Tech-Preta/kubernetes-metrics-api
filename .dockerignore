@@ -1,0 +1,58 @@
+# Diretórios e arquivos de controle de versão
+.git
+.gitignore
+.github
+
+# Binários compilados
+k8s-metrics-api
+/k8s-metrics-api
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Diretórios e arquivos de teste
+*_test.go
+/test
+/tests
+coverage.txt
+coverage.html
+
+# Ambientes de desenvolvimento
+.idea
+.vscode
+*.swp
+*.swo
+.DS_Store
+
+# Arquivos de configuração local
+kubeconfig
+*.kubeconfig
+*.env
+.env*
+*.local
+
+# Arquivos e diretórios de documentação
+README.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+SECURITY.md
+docs/
+examples/
+
+# Arquivos relacionados ao Kubernetes
+charts/
+k8s/
+rbac.yaml
+manifests/
+
+# Outros arquivos que não são necessários na imagem
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Arquivos temporários
+tmp/
+temp/
+*.log

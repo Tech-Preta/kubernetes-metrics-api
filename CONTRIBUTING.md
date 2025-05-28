@@ -13,8 +13,8 @@ Se você encontrar um bug ou tiver uma sugestão de melhoria, por favor, abra um
 1. **Fork o repositório**: Clique no botão "Fork" no topo da página do repositório.
 2. **Clone o seu fork**:
     ```sh
-    git clone https://github.com/Tech-Preta/repository_sample
-    cd repository_sample
+    git clone https://github.com/nataliagranato/k8s-api-metrics.git
+    cd k8s-api-metrics
     ```
 3. **Crie uma branch para a sua feature ou correção**:
     ```sh

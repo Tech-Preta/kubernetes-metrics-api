@@ -1,0 +1,102 @@
+# k8s-metrics-api-chart/values.yaml
+
+replicaCount: 1
+
+image:
+  repository: nataliagranato/k8s-metrics-api # Substitua pelo nome da sua imagem Docker
+  pullPolicy: IfNotPresent
+  tag: "v1.0.1" # Atualizado para a nova versão que trata o problema de token
+
+imagePullSecrets: [] # Se sua imagem estiver em um registro privado
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Especifica se uma ServiceAccount deve ser criada
+  create: true
+  # Anotações para adicionar à ServiceAccount
+  annotations: {}
+  # O nome da ServiceAccount a ser usada.
+  # Se não for definida e create for true, um nome será gerado usando o template fullname.
+  name: ""
+
+podAnnotations: {}
+podSecurityContext:
+  {}
+  # fsGroup: 2000
+
+securityContext:
+  {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 8080 # Porta que o serviço exporá
+  targetPort: 8080 # Porta do container onde a aplicação está rodando (PORT da API)
+
+ingress:
+  enabled: false
+  className: ""
+  annotations:
+    {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources:
+  {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with
+  # constrained resources, such as Minikube. If you do want to specify resources, uncomment the
+  # following lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Configurações específicas da aplicação
+application:
+  # O token de autenticação para a API.
+  # É ALTAMENTE RECOMENDADO usar um Secret existente ou permitir que o chart crie um.
+  # Não coloque tokens sensíveis diretamente aqui em produção.
+  authToken: "meuTokenSuperSeguro123!@#" #
+  # Se true, um novo Secret será criado com o authToken acima.
+  createAuthSecret: true
+  # Se createAuthSecret for false, especifique o nome de um Secret existente que contém o token.
+  # O Secret deve ter uma chave 'auth-token' (ou a chave especificada em authSecretKey).
+  existingAuthSecretName: "" # Deixe como está, pois createAuthSecret é true
+  authSecretKey: "auth-token" # A chave dentro do Secret que armazena o token
+  # Porta em que a aplicação escuta dentro do container.
+  # Deve corresponder ao que a API Go está configurada para usar (padrão 8080 no código).
+  containerPort: 8080
+
+# Configurações de RBAC
+rbac:
+  # Especifica se os recursos RBAC (ClusterRole, ClusterRoleBinding) devem ser criados
+  create: true

@@ -2,9 +2,9 @@
 
 ## Versões Suportadas
 
-| Versão  | Suporte          |
-| ------- | ---------------- |
-| 0.0.0  | :white_check_mark: |
+| Versão | Suporte            |
+| ------ | ------------------ |
+| 1.0.1  | :white_check_mark: |
 
 ## Reportando Vulnerabilidades
 

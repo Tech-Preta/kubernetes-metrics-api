@@ -1,0 +1,25 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: k8s-metrics-api-reader
+rules:
+- apiGroups: [""] # "" indica o core API group
+  resources: ["nodes", "pods", "services", "namespaces"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list", "watch"]
+# Adicione mais recursos e apiGroups conforme necessário
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: k8s-metrics-api-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: k8s-metrics-api-sa # Nome da ServiceAccount que você criará
+  namespace: default # Ou o namespace onde sua API será implantada
+roleRef:
+  kind: ClusterRole
+  name: k8s-metrics-api-reader
+  apiGroup: rbac.authorization.k8s.io
