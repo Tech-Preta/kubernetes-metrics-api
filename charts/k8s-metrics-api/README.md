@@ -5,9 +5,11 @@ Este Helm chart instala a API de métricas Kubernetes, que fornece informações
 ## Instalação
 
 ```bash
-# Adicionando o repositório (se aplicável)
-# helm repo add meu-repo URL_DO_REPO
-# helm repo update
+
+# Clone o repositório
+git clone https://github.com/nataliagranato/k8s-api-metrics.git
+
+cd k8s-api-metrics
 
 # Instalando o chart
 helm install k8s-api-metrics ./charts/k8s-metrics-api -n k8s-api-metrics --create-namespace
@@ -25,22 +27,6 @@ application:
   authToken: "seu-token-aqui"  # Substitua por um token seguro em produção
   createAuthSecret: true
   existingAuthSecretName: ""   # Deixe vazio quando createAuthSecret for true
-```
-
-### Opção 2: Usar um Secret existente (recomendado para produção)
-
-Primeiro, crie um Secret com o token:
-```bash
-kubectl create secret generic meu-secret-token -n k8s-api-metrics \
-  --from-literal=auth-token=seu-token-super-secreto
-```
-
-Depois, configure o chart para usar este Secret existente:
-```yaml
-application:
-  createAuthSecret: false
-  existingAuthSecretName: "meu-secret-token"  # Nome do Secret que você criou
-  authSecretKey: "auth-token"  # Chave dentro do Secret onde o token está armazenado
 ```
 
 ## Acessando a API

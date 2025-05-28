@@ -1,29 +1,42 @@
-# k8s-metrics-api
+# k8s-api-metrics
 
 API de métricas Kubernetes que fornece informações sobre o cluster através de endpoints RESTful protegidos por autenticação.
 
 ## Índice
 
-- [Visão Geral](#visão-geral)
-- [Requisitos](#requisitos)
-- [Histórico de Versões](#histórico-de-versões)
-- [Desenvolvimento Local](#desenvolvimento-local)
-  - [Compilar e Executar](#compilar-e-executar)
-  - [Testar Localmente](#testar-localmente)
-- [Docker](#docker)
-  - [Build da Imagem](#build-da-imagem)
-  - [Executar com Docker](#executar-com-docker)
-  - [Publicar Imagem no Registry](#publicar-imagem-no-registry)
-- [Kubernetes](#kubernetes)
-  - [Deploy com Helm](#deploy-com-helm)
-  - [Acessar a API no Kubernetes](#acessar-a-api-no-kubernetes)
-  - [Atualizar o Deployment](#atualizar-o-deployment)
-  - [Troubleshooting](#troubleshooting)
-- [Endpoints da API](#endpoints-da-api)
-- [Autenticação](#autenticação)
-- [Observações e Melhorias](#observações-e-melhorias)
-- [Contribuindo](#contribuindo)
-- [Licença](#licença)
+- [k8s-api-metrics](#k8s-api-metrics)
+  - [Índice](#índice)
+  - [Visão Geral](#visão-geral)
+  - [Requisitos](#requisitos)
+    - [Dependências](#dependências)
+  - [Histórico de Versões](#histórico-de-versões)
+    - [v1.0.1 (27 de maio de 2025)](#v101-27-de-maio-de-2025)
+      - [Detalhes da correção na v1.0.1](#detalhes-da-correção-na-v101)
+  - [Desenvolvimento Local](#desenvolvimento-local)
+    - [Compilar e Executar](#compilar-e-executar)
+    - [Testar Localmente](#testar-localmente)
+  - [Docker](#docker)
+    - [Build da Imagem](#build-da-imagem)
+    - [Executar com Docker](#executar-com-docker)
+    - [Publicar Imagem no Registry](#publicar-imagem-no-registry)
+  - [Kubernetes](#kubernetes)
+    - [Deploy com Helm](#deploy-com-helm)
+    - [Acessar a API no Kubernetes](#acessar-a-api-no-kubernetes)
+    - [Atualizar o Deployment](#atualizar-o-deployment)
+    - [Troubleshooting](#troubleshooting)
+  - [Endpoints da API](#endpoints-da-api)
+    - [Exemplos de Resposta](#exemplos-de-resposta)
+      - [`/metrics` (JSON)](#metrics-json)
+      - [`/healthz` (Health Check)](#healthz-health-check)
+  - [Autenticação](#autenticação)
+  - [Observações e Melhorias](#observações-e-melhorias)
+  - [Contribuindo](#contribuindo)
+    - [Validação e Testes](#validação-e-testes)
+      - [1. Teste Local com Go](#1-teste-local-com-go)
+      - [2. Teste com Docker](#2-teste-com-docker)
+      - [3. Teste com Kubernetes](#3-teste-com-kubernetes)
+    - [Convenções de Código](#convenções-de-código)
+  - [Licença](#licença)
 
 ## Visão Geral
 
@@ -100,21 +113,21 @@ Para compilar e executar a aplicação localmente:
 
 ```bash
 # Clone o repositório
-git clone <URL_DO_REPOSITORIO>
-cd k8s-metrics-api
+git clone https://github.com/nataliagranato/k8s-api-metrics.git
+cd k8s-api-metrics
 
 # Baixe as dependências
 go mod download
 go mod verify
 
 # Compile o código
-go build -o k8s-metrics-api .
+go build -o k8s-api-metrics .
 
 # Configure o token de autenticação
 export EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#"
 
 # Execute a aplicação (usa o kubeconfig do seu $HOME/.kube/config)
-./k8s-metrics-api
+./k8s-api-metrics
 ```
 
 ### Testar Localmente
@@ -140,10 +153,10 @@ Para construir a imagem Docker:
 
 ```bash
 # Build da imagem
-docker build -t nataliagranato/k8s-metrics-api:v1.0.1 .
+docker build -t nataliagranato/k8s-api-metrics:v1.0.1 .
 
 # Verificar se a imagem foi criada
-docker images | grep k8s-metrics-api
+docker images | grep k8s-api-metrics
 ```
 
 ### Executar com Docker
@@ -152,10 +165,10 @@ Para executar a aplicação usando Docker:
 
 ```bash
 # Executar o container Docker
-docker run -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" nataliagranato/k8s-metrics-api:v1.0.1
+docker run -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" nataliagranato/k8s-api-metrics:v1.0.1
 
 # Para execução em modo detached (background)
-docker run -d -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" nataliagranato/k8s-metrics-api:v1.0.1
+docker run -d -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" nataliagranato/k8s-api-metrics:v1.0.1
 ```
 
 Observação: Para que o container acesse o cluster Kubernetes, você precisará montar o arquivo kubeconfig ou executar o container dentro de um pod no cluster.
@@ -169,7 +182,7 @@ Para publicar a imagem no Docker Hub ou outro registry:
 docker login
 
 # Push da imagem
-docker push nataliagranato/k8s-metrics-api:v1.0.1
+docker push nataliagranato/k8s-api-metrics:v1.0.1
 ```
 
 ## Kubernetes
@@ -180,19 +193,19 @@ Para implantar a aplicação no Kubernetes usando Helm:
 
 ```bash
 # Navegue até a pasta do projeto
-cd k8s-metrics-api
+cd k8s-api-metrics
 
 # Crie um namespace para a aplicação
 kubectl create namespace k8s-api-metrics
 
 # Instale o chart Helm
-helm install k8s-api-metrics ./charts/k8s-metrics-api -n k8s-api-metrics
+helm install k8s-api-metrics ./charts/k8s-api-metrics -n k8s-api-metrics
 ```
 
-Para personalizar a instalação, você pode editar o arquivo `charts/k8s-metrics-api/values.yaml` ou usar o parâmetro `--set`:
+Para personalizar a instalação, você pode editar o arquivo `charts/k8s-api-metrics/values.yaml` ou usar o parâmetro `--set`:
 
 ```bash
-helm install k8s-api-metrics ./charts/k8s-metrics-api -n k8s-api-metrics \
+helm install k8s-api-metrics ./charts/k8s-api-metrics -n k8s-api-metrics \
   --set application.authToken="seuTokenPersonalizado" \
   --set replicaCount=2
 ```
@@ -203,7 +216,7 @@ Após a instalação, você pode acessar a API usando port-forward:
 
 ```bash
 # Port-forward para acessar o serviço localmente
-kubectl port-forward svc/k8s-api-metrics-k8s-metrics-api 8080:8080 -n k8s-api-metrics
+kubectl port-forward svc/k8s-api-metrics-k8s-api-metrics 8080:8080 -n k8s-api-metrics
 
 # Em outro terminal, acesse a API com o token
 curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/metrics
@@ -218,7 +231,7 @@ Para atualizar a aplicação para uma nova versão:
 ```bash
 # Edite o arquivo values.yaml para atualizar a tag da imagem
 # Em seguida, atualize o deployment
-helm upgrade k8s-api-metrics ./charts/k8s-metrics-api -n k8s-api-metrics
+helm upgrade k8s-api-metrics ./charts/k8s-api-metrics -n k8s-api-metrics
 
 # Verificar o status da atualização
 kubectl get pods -n k8s-api-metrics
@@ -236,7 +249,7 @@ kubectl get pods -n k8s-api-metrics
 kubectl logs -n k8s-api-metrics $(kubectl get pods -n k8s-api-metrics -o jsonpath='{.items[0].metadata.name}')
 
 # Verificar o Secret com o token
-kubectl get secret -n k8s-api-metrics k8s-api-metrics-k8s-metrics-api-auth-token -o jsonpath='{.data.auth-token}' | base64 --decode
+kubectl get secret -n k8s-api-metrics k8s-api-metrics-k8s-api-metrics-auth-token -o jsonpath='{.data.auth-token}' | base64 --decode
 
 # Verificar o token dentro do pod
 kubectl exec -it -n k8s-api-metrics $(kubectl get pods -n k8s-api-metrics -o jsonpath='{.items[0].metadata.name}') -- sh
@@ -346,23 +359,23 @@ curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/
 
 ```bash
 # Construa a imagem
-docker build -t nataliagranato/k8s-metrics-api:latest .
+docker build -t nataliagranato/k8s-api-metrics:latest .
 
 # Execute o container
-docker run -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" nataliagranato/k8s-metrics-api:latest
+docker run -p 8080:8080 -e EXPECTED_AUTH_TOKEN="meuTokenSuperSeguro123!@#" nataliagranato/k8s-api-metrics:latest
 ```
 
 #### 3. Teste com Kubernetes
 
 ```bash
 # Deploy com Helm
-helm install k8s-api-metrics ./charts/k8s-metrics-api -n k8s-api-metrics --create-namespace
+helm install k8s-api-metrics ./charts/k8s-api-metrics -n k8s-api-metrics --create-namespace
 
 # Verifique os pods
 kubectl get pods -n k8s-api-metrics
 
 # Port-forward
-kubectl port-forward svc/k8s-api-metrics-k8s-metrics-api 8080:8080 -n k8s-api-metrics
+kubectl port-forward svc/k8s-api-metrics-k8s-api-metrics 8080:8080 -n k8s-api-metrics
 
 # Teste a API
 curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/metrics
