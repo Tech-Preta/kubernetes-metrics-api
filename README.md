@@ -1,4 +1,4 @@
-# k8s-api-metrics
+# Kubernetes API Metrics
 
 API de métricas Kubernetes que fornece informações sobre o cluster através de endpoints RESTful protegidos por autenticação.
 
