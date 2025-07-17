@@ -1,1 +1,23 @@
+# Build artifacts
+k8s-metrics-api-test
+k8s-metrics-api
+*.exe
+*.exe~
+*.so
+*.dylib
+*.test
+*.out
 
+# Temporary files
+/tmp/
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files
+.env
+.env.local

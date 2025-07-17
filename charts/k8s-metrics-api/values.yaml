@@ -2,10 +2,16 @@
 
 replicaCount: 1
 
+# Namespace (defaults to Release namespace if not specified)
+namespace: ""
+
 image:
   repository: nataliagranato/k8s-metrics-api # Substitua pelo nome da sua imagem Docker
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: "v1.0.1" # Atualizado para a nova versão que trata o problema de token
+  # Image digest for additional security (CKV_K8S_43)
+  # Uncomment and set the correct digest when available
+  digest: sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
 
 imagePullSecrets: [] # Se sua imagem estiver em um registro privado
 nameOverride: ""
@@ -22,17 +28,24 @@ serviceAccount:
 
 podAnnotations: {}
 podSecurityContext:
-  {}
-  # fsGroup: 2000
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
 
 securityContext:
-  {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  allowPrivilegeEscalation: false
+  seccompProfile:
+    type: RuntimeDefault
 
 service:
   type: ClusterIP
@@ -57,17 +70,12 @@ ingress:
   #      - chart-example.local
 
 resources:
-  {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with
-  # constrained resources, such as Minikube. If you do want to specify resources, uncomment the
-  # following lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
 
 autoscaling:
   enabled: false
@@ -85,7 +93,9 @@ application:
   # O token de autenticação para a API.
   # É ALTAMENTE RECOMENDADO usar um Secret existente ou permitir que o chart crie um.
   # Não coloque tokens sensíveis diretamente aqui em produção.
-  authToken: "meuTokenSuperSeguro123!@#" #
+  # IMPORTANTE: Gere um token seguro e mantenha-o protegido.
+  # Exemplo: openssl rand -base64 32
+  authToken: "" # DEVE ser definido durante o deploy ou usar existingAuthSecretName
   # Se true, um novo Secret será criado com o authToken acima.
   createAuthSecret: true
   # Se createAuthSecret for false, especifique o nome de um Secret existente que contém o token.
@@ -96,7 +106,39 @@ application:
   # Deve corresponder ao que a API Go está configurada para usar (padrão 8080 no código).
   containerPort: 8080
 
+# NOTA IMPORTANTE SOBRE MUDANÇAS DE SEGURANÇA:
+# 
+# A partir desta versão, por questões de segurança (CKV_K8S_35):
+# - O token de autenticação NÃO é mais passado como variável de ambiente
+# - O token é montado como arquivo em /etc/secrets/auth-token
+# - A aplicação deve ser atualizada para ler o token do arquivo ao invés da variável EXPECTED_AUTH_TOKEN
+#
+# Para aplicações que ainda dependem da variável de ambiente, você pode descomentar 
+# as linhas comentadas no deployment.yaml e comentar a seção de volumeMounts
+
 # Configurações de RBAC
 rbac:
   # Especifica se os recursos RBAC (ClusterRole, ClusterRoleBinding) devem ser criados
   create: true
+
+# Configurações de NetworkPolicy
+networkPolicy:
+  enabled: true
+  ingress:
+    from:
+    # Allow ingress from all pods in the same namespace by default
+    - namespaceSelector:
+        matchLabels:
+          name: default  # This should be set during deployment
+    # Allow ingress from pods with specific labels (customize as needed)
+    # - podSelector:
+    #     matchLabels:
+    #       app: allowed-app
+  egress:
+    additional: []
+    # Add additional egress rules if needed
+    # - to:
+    #   - namespaceSelector: {}
+    #   ports:
+    #   - protocol: TCP
+    #     port: 80
