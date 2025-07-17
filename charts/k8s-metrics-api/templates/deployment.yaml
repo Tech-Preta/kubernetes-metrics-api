@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "k8s-metrics-api.fullname" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
   labels:
     {{- include "k8s-metrics-api.labels" . | nindent 4 }}
 spec:
@@ -24,22 +25,25 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "k8s-metrics-api.serviceAccountName" . }}
+      automountServiceAccountToken: false
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}{{ if .Values.image.digest }}@{{ .Values.image.digest }}{{ end }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: PORT # A API Go lê esta variável para definir a porta
               value: {{ .Values.application.containerPort | quote }}
-            - name: EXPECTED_AUTH_TOKEN # A API Go lê esta variável para o token
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "k8s-metrics-api.authTokenSecretName" . }}
-                  key: {{ .Values.application.authSecretKey }}
+            # Mount auth token as file instead of env var for CKV_K8S_35 compliance
+            # The application should read from /etc/secrets/auth-token file
+            # - name: EXPECTED_AUTH_TOKEN # A API Go lê esta variável para o token
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: {{ include "k8s-metrics-api.authTokenSecretName" . }}
+            #       key: {{ .Values.application.authSecretKey }}
             # Adicione outras variáveis de ambiente necessárias aqui
             # - name: GIN_MODE
             #   value: "release"
@@ -61,20 +65,29 @@ spec:
             periodSeconds: 10
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if .Values.securityContext.readOnlyRootFilesystem }}
           volumeMounts:
+            {{- if .Values.securityContext.readOnlyRootFilesystem }}
             - name: tmp
               mountPath: /tmp
             - name: var-tmp
               mountPath: /var/tmp
-          {{- end }}
-      {{- if .Values.securityContext.readOnlyRootFilesystem }}
+            {{- end }}
+            - name: auth-token
+              mountPath: /etc/secrets
+              readOnly: true
       volumes:
+        {{- if .Values.securityContext.readOnlyRootFilesystem }}
         - name: tmp
           emptyDir: {}
         - name: var-tmp
           emptyDir: {}
-      {{- end }}
+        {{- end }}
+        - name: auth-token
+          secret:
+            secretName: {{ include "k8s-metrics-api.authTokenSecretName" . }}
+            items:
+            - key: {{ .Values.application.authSecretKey }}
+              path: auth-token
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

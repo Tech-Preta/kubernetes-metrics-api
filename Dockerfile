@@ -30,8 +30,8 @@ FROM alpine:3.19
 WORKDIR /app
 
 # Cria usuário não-root (usando os comandos básicos do alpine)
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+RUN addgroup -g 10001 -S appgroup && \
+    adduser -u 10001 -S appuser -G appgroup
 
 # Copia apenas o binário compilado do estágio de build
 COPY --from=builder /app/k8s-metrics-api ./k8s-metrics-api

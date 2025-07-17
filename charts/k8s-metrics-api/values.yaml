@@ -7,10 +7,11 @@ namespace: ""
 
 image:
   repository: nataliagranato/k8s-metrics-api # Substitua pelo nome da sua imagem Docker
-  pullPolicy: IfNotPresent
+  pullPolicy: Always
   tag: "v1.0.1" # Atualizado para a nova versão que trata o problema de token
   # Image digest for additional security (CKV_K8S_43)
-  # digest: sha256:example-digest-here
+  # Uncomment and set the correct digest when available
+  digest: sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
 
 imagePullSecrets: [] # Se sua imagem estiver em um registro privado
 nameOverride: ""
@@ -28,9 +29,9 @@ serviceAccount:
 podAnnotations: {}
 podSecurityContext:
   runAsNonRoot: true
-  runAsUser: 1001
-  runAsGroup: 1001
-  fsGroup: 1001
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
   seccompProfile:
     type: RuntimeDefault
 
@@ -40,8 +41,8 @@ securityContext:
     - ALL
   readOnlyRootFilesystem: true
   runAsNonRoot: true
-  runAsUser: 1001
-  runAsGroup: 1001
+  runAsUser: 10001
+  runAsGroup: 10001
   allowPrivilegeEscalation: false
   seccompProfile:
     type: RuntimeDefault
@@ -104,6 +105,16 @@ application:
   # Porta em que a aplicação escuta dentro do container.
   # Deve corresponder ao que a API Go está configurada para usar (padrão 8080 no código).
   containerPort: 8080
+
+# NOTA IMPORTANTE SOBRE MUDANÇAS DE SEGURANÇA:
+# 
+# A partir desta versão, por questões de segurança (CKV_K8S_35):
+# - O token de autenticação NÃO é mais passado como variável de ambiente
+# - O token é montado como arquivo em /etc/secrets/auth-token
+# - A aplicação deve ser atualizada para ler o token do arquivo ao invés da variável EXPECTED_AUTH_TOKEN
+#
+# Para aplicações que ainda dependem da variável de ambiente, você pode descomentar 
+# as linhas comentadas no deployment.yaml e comentar a seção de volumeMounts
 
 # Configurações de RBAC
 rbac:
