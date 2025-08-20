@@ -5,8 +5,8 @@ on:
     types: [opened]
 permissions:
   contents: read
-  issues: write  
-  
+  issues: write
+
 jobs:
   resposta-automatica:
     runs-on: ubuntu-latest

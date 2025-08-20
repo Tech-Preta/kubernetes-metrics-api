@@ -1,0 +1,93 @@
+[tools]
+go = "1.24.4"
+pre-commit = "4.2.0"
+golangci-lint = "1.64.8"
+mockery = "2.42.2"
+gotestsum = "1.12.0"
+swag = "1.16.6"
+
+[tasks.setup]
+description = "Setup the project"
+run = ["pre-commit install", "go mod download"]
+
+[tasks.api]
+description = "Run the api project"
+run = "go run ./cmd"
+
+[tasks.build]
+description = "Build the project"
+run = 'go build -o bin/main ./cmd'
+
+[tasks.golint]
+description = "Run golangci-lint"
+run = "golangci-lint run --config .golangci.yml"
+
+[tasks.fmt]
+description = "Format / fix code & swagger fmt"
+run = [
+    "golangci-lint run --fix --config .golangci.yml || true",
+    "go fmt ./...",
+    "(command -v swag >/dev/null || go install github.com/swaggo/swag/cmd/swag@v1.16.6) && swag fmt || true"
+]
+
+[tasks.generators]
+description = "Run code generators (mocks + swagger fmt)"
+run = [
+    "mockery --all --keeptree --case underscore || true",
+    "(command -v swag >/dev/null || go install github.com/swaggo/swag/cmd/swag@v1.16.6) && swag fmt || true"
+]
+
+[tasks.gen]
+alias = "generators"
+
+[tasks.gmt]
+description = "Go mod tidy + verify"
+run = [
+    "go mod tidy",
+    "go mod verify"
+]
+[tasks.lint]
+description = "Run pre-commit hooks"
+run = 'pre-commit run --all-files'
+[tasks.test]
+description = "Run all tests"
+run = "gotestsum --format=testname -- $(go list ./... | grep -v '/mock/') -coverprofile=coverage.out"
+
+[tasks.coverage]
+description = "Generate test coverage report"
+run = "go test -v ./... -coverprofile=coverage.out -covermode=atomic && go tool cover -html=coverage.out -o coverage.html"
+
+[tasks.sonar-prepare]
+description = "Prepare reports for SonarQube analysis"
+run = [
+    "go test -v ./... -coverprofile=coverage.out -covermode=atomic",
+    "golangci-lint run --out-format checkstyle > golangci-lint-report.xml || true",
+    "go vet ./... 2> govet-report.out || true"
+]
+
+[tasks.sonar-analysis]
+description = "Run SonarQube analysis"
+run = "./scripts/sonar-analysis.sh"
+
+[tasks.quality-check]
+description = "Run all quality checks (tests, lint, coverage)"
+run = [
+    "mise run test",
+    "mise run golint",
+    "mise run coverage",
+    "echo '✅ All quality checks passed!'"
+]
+
+[tasks.validate-metadata]
+description = "Validate repository metadata file"
+run = "./scripts/validate-metadata.sh"
+
+[tasks.project-info]
+description = "Display project information from metadata"
+run = [
+    "echo '📋 Project Information:'",
+    "grep -A 5 '^project:' repository-metadata.yaml",
+    "echo ''",
+    "echo '🔧 Technology Stack:'",
+    "grep -A 5 '^technology:' repository-metadata.yaml"
+]

@@ -1,0 +1,297 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Kubernetes API Metrics",
+        "description": "API de métricas Kubernetes que fornece informações sobre o cluster através de endpoints RESTful protegidos por autenticação.\n\nEsta API coleta e expõe métricas importantes do cluster Kubernetes, incluindo:\n- Contagem de nós, pods, deployments, serviços e namespaces\n- Status de saúde dos nós\n- Fases dos pods\n- Recursos alocáveis dos nós\n- Métricas do Prometheus\n\n## Autenticação\nA maioria dos endpoints requer autenticação via Bearer token no cabeçalho Authorization.",
+        "version": "1.0.0",
+        "contact": {
+            "name": "API Support",
+            "url": "https://github.com/nataliagranato/k8s-api-metrics"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080",
+            "description": "Servidor de desenvolvimento local"
+        },
+        {
+            "url": "https://k8s-metrics-api.example.com",
+            "description": "Servidor de produção"
+        }
+    ],
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ],
+    "paths": {
+        "/healthz": {
+            "get": {
+                "summary": "Health Check",
+                "description": "Endpoint de verificação de saúde da API (não requer autenticação)",
+                "tags": [
+                    "Health"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "API está funcionando corretamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "ok"
+                                        },
+                                        "ts": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-08-20T18:30:00Z"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/metrics": {
+            "get": {
+                "summary": "Métricas do Cluster (JSON)",
+                "description": "Retorna métricas detalhadas do cluster Kubernetes em formato JSON.\n\nInclui informações sobre:\n- Contagem de recursos (nós, pods, deployments, etc.)\n- Fases dos pods\n- Timestamp da coleta",
+                "tags": [
+                    "Metrics"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Métricas coletadas com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ClusterMetrics"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token de autenticação inválido ou ausente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/prometheus": {
+            "get": {
+                "summary": "Métricas Prometheus",
+                "description": "Endpoint que expõe métricas no formato Prometheus para scraping.\n\nInclui métricas como:\n- k8s_metrics_api_node_count\n- k8s_metrics_api_pod_count\n- k8s_metrics_api_node_ready\n- k8s_metrics_api_cpu_allocatable\n- k8s_metrics_api_memory_allocatable\n- E muitas outras...",
+                "tags": [
+                    "Metrics"
+                ],
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Métricas no formato Prometheus",
+                        "content": {
+                            "text/plain": {
+                                "schema": {
+                                    "type": "string",
+                                    "example": "# HELP k8s_metrics_api_node_count Number of nodes in the cluster\n# TYPE k8s_metrics_api_node_count gauge\nk8s_metrics_api_node_count 3\n# HELP k8s_metrics_api_pod_count Number of pods in the cluster\n# TYPE k8s_metrics_api_pod_count gauge\nk8s_metrics_api_pod_count 25"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token de autenticação inválido ou ausente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/swagger.yaml": {
+            "get": {
+                "summary": "Especificação OpenAPI",
+                "description": "Retorna a especificação OpenAPI desta API em formato YAML",
+                "tags": [
+                    "Documentation"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "Especificação OpenAPI",
+                        "content": {
+                            "application/yaml": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/docs": {
+            "get": {
+                "summary": "Documentação Interativa",
+                "description": "Interface Swagger UI para explorar e testar a API interativamente",
+                "tags": [
+                    "Documentation"
+                ],
+                "security": [],
+                "responses": {
+                    "200": {
+                        "description": "Página HTML com Swagger UI",
+                        "content": {
+                            "text/html": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "Token de autenticação Bearer. Configure a variável de ambiente EXPECTED_AUTH_TOKEN no servidor.\n\nExemplo: `Authorization: Bearer meuTokenSuperSeguro123!@#`"
+            }
+        },
+        "schemas": {
+            "ClusterMetrics": {
+                "type": "object",
+                "description": "Métricas coletadas do cluster Kubernetes",
+                "properties": {
+                    "nodeCount": {
+                        "type": "integer",
+                        "description": "Número total de nós no cluster",
+                        "example": 3
+                    },
+                    "podCount": {
+                        "type": "integer",
+                        "description": "Número total de pods no cluster",
+                        "example": 25
+                    },
+                    "deploymentCount": {
+                        "type": "integer",
+                        "description": "Número total de deployments no cluster",
+                        "example": 8
+                    },
+                    "serviceCount": {
+                        "type": "integer",
+                        "description": "Número total de serviços no cluster",
+                        "example": 12
+                    },
+                    "namespaceCount": {
+                        "type": "integer",
+                        "description": "Número total de namespaces no cluster",
+                        "example": 5
+                    },
+                    "podPhases": {
+                        "type": "object",
+                        "description": "Contagem de pods por fase",
+                        "additionalProperties": {
+                            "type": "integer"
+                        },
+                        "example": {
+                            "Running": 20,
+                            "Pending": 3,
+                            "Succeeded": 2,
+                            "Failed": 0
+                        }
+                    },
+                    "timestamp": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "Timestamp de quando as métricas foram coletadas",
+                        "example": "2025-08-20T18:30:00Z"
+                    }
+                },
+                "required": [
+                    "nodeCount",
+                    "podCount",
+                    "deploymentCount",
+                    "serviceCount",
+                    "namespaceCount",
+                    "podPhases",
+                    "timestamp"
+                ]
+            },
+            "Error": {
+                "type": "object",
+                "description": "Estrutura de erro padrão",
+                "properties": {
+                    "error": {
+                        "type": "string",
+                        "description": "Mensagem de erro",
+                        "example": "Unauthorized: invalid or missing token"
+                    },
+                    "code": {
+                        "type": "integer",
+                        "description": "Código HTTP do erro",
+                        "example": 401
+                    }
+                },
+                "required": [
+                    "error"
+                ]
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Health",
+            "description": "Endpoints de verificação de saúde"
+        },
+        {
+            "name": "Metrics",
+            "description": "Endpoints de coleta de métricas"
+        },
+        {
+            "name": "Documentation",
+            "description": "Documentação da API"
+        }
+    ]
+}

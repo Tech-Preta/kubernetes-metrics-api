@@ -1,0 +1,28 @@
+{{/* k8s-metrics-api-chart/templates/NOTES.txt */}}
+A API de Métricas Kubernetes (v{{ .Chart.AppVersion }}) foi implantada com sucesso.
+
+1. Obtenha o status da aplicação:
+   kubectl get pods -l app.kubernetes.io/name={{ include "k8s-metrics-api.name" . }} -n {{ .Release.Namespace }}
+
+2. Para acessar a API (exemplo com port-forward, se service.type for ClusterIP):
+   export POD_NAME=$(kubectl get pods -l app.kubernetes.io/name={{ include "k8s-metrics-api.name" . }} -n {{ .Release.Namespace }} -o jsonpath="{.items[0].metadata.name}")
+   echo "Acesse a API em http://127.0.0.1:8080 após executar: kubectl port-forward $POD_NAME 8080:{{ .Values.application.containerPort }} -n {{ .Release.Namespace }}"
+
+   Lembre-se de usar o token de autenticação no cabeçalho 'Authorization: Bearer SEU_TOKEN'.
+   Usando curl, prefira aspas simples para evitar problemas com caracteres especiais no token:
+   curl -H 'Authorization: Bearer SEU_TOKEN' http://localhost:8080/metrics
+
+   O token configurado é: {{ .Values.application.authToken }}
+   (Se estiver usando um Secret existente, este valor pode não ser o real).
+
+   Endpoints:
+   - Health: /healthz (não protegido)
+   - Métricas JSON: /metrics (protegido)
+   - Métricas Prometheus: /prometheus (protegido)
+
+{{- if .Values.ingress.enabled }}
+3. Acesse via Ingress:
+   {{- range .Values.ingress.hosts }}
+   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}{{ range .paths }}{{ .path }}{{ end }}
+   {{- end }}
+{{- end }}

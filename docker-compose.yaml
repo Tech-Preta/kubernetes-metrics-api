@@ -1,0 +1,221 @@
+version: '3.8'
+
+# Docker Compose para k8s-api-metrics
+# Inclui a aplicação principal, Prometheus, Grafana e ferramentas de desenvolvimento
+
+services:
+  # Aplicação principal - k8s-api-metrics
+  k8s-api-metrics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: k8s-api-metrics
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - EXPECTED_AUTH_TOKEN=dev-token-123456789
+    volumes:
+      # Mount kubeconfig para acessar cluster local
+      - ${HOME}/.kube:/home/appuser/.kube:ro
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8080"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+    depends_on:
+      - prometheus
+
+  # Prometheus - Coleta de métricas
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+
+  # Grafana - Visualização de métricas
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./config/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+    depends_on:
+      - prometheus
+
+  # AlertManager - Alertas do Prometheus
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    volumes:
+      - ./config/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager_data:/alertmanager
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+
+  # PostgreSQL - Para desenvolvimento/testes (se necessário)
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-k8s-metrics
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=k8s_metrics
+      - POSTGRES_USER=k8s_user
+      - POSTGRES_PASSWORD=k8s_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U k8s_user -d k8s_metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+
+  # Redis - Cache/Session store (se necessário)
+  redis:
+    image: redis:7-alpine
+    container_name: redis-k8s-metrics
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+
+  # Nginx - Reverse proxy e load balancer
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: nginx-k8s-metrics
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_logs:/var/log/nginx
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+    depends_on:
+      - k8s-api-metrics
+
+  # Jaeger - Distributed tracing (opcional)
+  jaeger:
+    image: jaegertracing/all-in-one:1.50
+    container_name: jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14268:14268"  # jaeger.thrift
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:14269/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+
+  # Node Exporter - Métricas do sistema
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+    volumes:
+      - '/:/host:ro,rslave'
+    restart: unless-stopped
+    networks:
+      - k8s-metrics-network
+
+# Volumes persistentes
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  alertmanager_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+# Rede personalizada
+networks:
+  k8s-metrics-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

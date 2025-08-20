@@ -1,0 +1,17 @@
+# k8s-metrics-api-chart/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "k8s-metrics-api.fullname" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "k8s-metrics-api.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http # Refere-se ao nome da porta no container do deployment
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "k8s-metrics-api.selectorLabels" . | nindent 4 }}

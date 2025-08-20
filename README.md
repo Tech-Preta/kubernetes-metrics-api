@@ -4,7 +4,7 @@ API de métricas Kubernetes que fornece informações sobre o cluster através d
 
 ## Índice
 
-- [k8s-api-metrics](#k8s-api-metrics)
+- [Kubernetes API Metrics](#kubernetes-api-metrics)
   - [Índice](#índice)
   - [Visão Geral](#visão-geral)
   - [Requisitos](#requisitos)
@@ -36,7 +36,6 @@ API de métricas Kubernetes que fornece informações sobre o cluster através d
       - [2. Teste com Docker](#2-teste-com-docker)
       - [3. Teste com Kubernetes](#3-teste-com-kubernetes)
     - [Convenções de Código](#convenções-de-código)
-  - [Licença](#licença)
 
 ## Visão Geral
 
@@ -142,7 +141,7 @@ curl http://localhost:8080/healthz
 curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/metrics
 
 # Teste o endpoint de métricas Prometheus (requer autenticação)
-curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/metrics-prometheus
+curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/prometheus
 ```
 
 ## Docker
@@ -261,7 +260,7 @@ echo "$EXPECTED_AUTH_TOKEN"
 A API expõe os seguintes endpoints:
 
 - `/metrics` - Métricas em formato JSON (requer autenticação)
-- `/metrics-prometheus` - Métricas em formato Prometheus (requer autenticação)
+- `/prometheus` - Métricas em formato Prometheus (requer autenticação)
 - `/healthz` - Endpoint de health check (não requer autenticação)
 
 ### Exemplos de Resposta
@@ -307,7 +306,7 @@ A API expõe os seguintes endpoints:
 
 ## Autenticação
 
-A API utiliza autenticação baseada em token usando o header HTTP `Authorization`. 
+A API utiliza autenticação baseada em token usando o header HTTP `Authorization`.
 
 Exemplo:
 ```
@@ -388,7 +387,3 @@ curl -H 'Authorization: Bearer meuTokenSuperSeguro123!@#' http://localhost:8080/
 - Use `gofmt` para formatar seu código
 - Adicione comentários explicativos para funções e estruturas complexas
 - Mantenha a documentação atualizada
-
-## Licença
-
-Este projeto está licenciado sob [GNU GENERAL PUBLIC LICENSE] - veja o arquivo LICENSE para detalhes.

@@ -53,7 +53,7 @@ EXPOSE 8080
 # Adiciona HEALTHCHECK para verificar se a aplicação está funcionando
 # Usando curl interno do Alpine (se disponível) ou alternativa
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD nc -z localhost 8080 || exit 1
+    CMD nc -z localhost 8080 || exit 1
 
 # Comando para executar a aplicação quando o container iniciar
 # O token EXPECTED_AUTH_TOKEN será injetado pelo Kubernetes (via Secret, como no Helm chart)

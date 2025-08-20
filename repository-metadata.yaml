@@ -1,0 +1,300 @@
+# Repository Metadata - k8s-api-metrics
+# Este arquivo contém metadados estruturados sobre o projeto
+
+# Informações básicas do projeto
+project:
+  name: "k8s-api-metrics"
+  full_name: "Kubernetes API Metrics"
+  description: "API para coleta e exposição de métricas de clusters Kubernetes em formato JSON e Prometheus"
+  version: "1.0.0"
+  created_date: "2025-08-19"
+  last_updated: "2025-08-19"
+
+# Informações do repositório
+repository:
+  url: "https://github.com/nataliagranato/k8s-api-metrics"
+  clone_url: "https://github.com/nataliagranato/k8s-api-metrics.git"
+  ssh_url: "git@github.com:nataliagranato/k8s-api-metrics.git"
+  default_branch: "main"
+  current_branch: "develop"
+  license: "MIT"
+  visibility: "public"
+
+# Informações do autor/maintainer
+maintainer:
+  name: "Natalia Granato"
+  github: "nataliagranato"
+  email: "contact@nataliagranato.dev"
+  role: "Owner/Maintainer"
+
+# Tecnologias e linguagens
+technology:
+  primary_language: "Go"
+  go_version: "1.24.0"
+  framework: "Standard Library + Kubernetes client-go"
+  architecture: "Microservice/API"
+  deployment: "Kubernetes, Docker"
+
+# Dependências principais
+dependencies:
+  direct:
+    - name: "prometheus/client_golang"
+      version: "v1.22.0"
+      purpose: "Métricas Prometheus"
+      type: "metrics"
+    - name: "k8s.io/client-go"
+      version: "v0.33.1"
+      purpose: "Cliente Kubernetes"
+      type: "kubernetes"
+    - name: "k8s.io/apimachinery"
+      version: "v0.33.1"
+      purpose: "Tipos e utilitários Kubernetes"
+      type: "kubernetes"
+    - name: "stretchr/testify"
+      version: "v1.10.0"
+      purpose: "Framework de testes"
+      type: "testing"
+
+  development:
+    - name: "mockery"
+      version: "v2.53.5"
+      purpose: "Geração de mocks para testes"
+      type: "testing"
+    - name: "golangci-lint"
+      version: "latest"
+      purpose: "Linter de código Go"
+      type: "development"
+    - name: "pre-commit"
+      version: "4.2.0"
+      purpose: "Hooks de commit"
+      type: "development"
+
+# Estrutura do projeto
+structure:
+  architecture: "Clean Architecture"
+  pattern: "Repository + Service"
+  directories:
+    - name: "cmd/"
+      description: "Ponto de entrada da aplicação"
+      files: ["main.go"]
+    - name: "internal/"
+      description: "Código interno da aplicação"
+      subdirectories:
+        - "config/ - Configuração da aplicação"
+        - "handlers/ - Handlers HTTP"
+        - "k8s/ - Cliente e operações Kubernetes"
+        - "metrics/ - Métricas Prometheus"
+        - "middleware/ - Middlewares HTTP"
+        - "models/ - Estruturas de dados"
+    - name: "docs/"
+      description: "Documentação do projeto"
+    - name: "charts/"
+      description: "Helm charts para deployment"
+    - name: "k8s/"
+      description: "Manifests Kubernetes"
+    - name: "scripts/"
+      description: "Scripts de automação"
+
+# Features e funcionalidades
+features:
+  api_endpoints:
+    - path: "/metrics"
+      method: "GET"
+      description: "Métricas do cluster em formato JSON"
+      authentication: "Bearer Token"
+    - path: "/prometheus"
+      method: "GET"
+      description: "Métricas em formato Prometheus"
+      authentication: "Bearer Token"
+    - path: "/healthz"
+      method: "GET"
+      description: "Health check da aplicação"
+      authentication: "Público"
+
+  metrics_collected:
+    - "Contagem de nós do cluster"
+    - "Contagem de pods"
+    - "Contagem de deployments"
+    - "Contagem de services"
+    - "Status dos nós (Ready/NotReady)"
+    - "Informações detalhadas dos nós"
+
+# Qualidade de código
+quality:
+  testing:
+    framework: "Go testing + testify"
+    coverage_target: "80%"
+    types: ["unit", "integration"]
+    mocks: "Mockery"
+
+  linting:
+    tool: "golangci-lint"
+    config: ".golangci.yml"
+    rules: "Strict rules enabled"
+
+  code_analysis:
+    sonarqube: true
+    config: "sonar-project.properties"
+    reports: ["coverage", "golangci-lint", "go vet"]
+
+# Deployment e infraestrutura
+deployment:
+  containerization:
+    docker: true
+    dockerfile: "Dockerfile"
+    base_image: "golang:1.24.4-alpine"
+    multi_stage: true
+
+  orchestration:
+    kubernetes: true
+    helm_charts: true
+    namespace: "monitoring"
+
+  environments:
+    - name: "development"
+      cluster: "local"
+      resources: "minimal"
+    - name: "staging"
+      cluster: "staging-k8s"
+      resources: "medium"
+    - name: "production"
+      cluster: "prod-k8s"
+      resources: "high-availability"
+
+# CI/CD
+cicd:
+  platforms:
+    - "GitHub Actions"
+    - "GitLab CI (template disponível)"
+
+  pipelines:
+    - name: "test"
+      triggers: ["push", "pull_request"]
+      steps: ["test", "lint", "coverage"]
+    - name: "build"
+      triggers: ["push to main"]
+      steps: ["build", "docker push"]
+    - name: "deploy"
+      triggers: ["tag"]
+      steps: ["helm deploy"]
+
+  quality_gates:
+    - "All tests pass"
+    - "Coverage > 80%"
+    - "No linting errors"
+    - "SonarQube quality gate"
+
+# Segurança
+security:
+  authentication:
+    method: "Bearer Token"
+    environment_variable: "EXPECTED_AUTH_TOKEN"
+
+  rbac:
+    kubernetes: true
+    file: "rbac.yaml"
+    permissions: ["get", "list"]
+    resources: ["nodes", "pods", "deployments", "services"]
+
+  scanning:
+    dependency_check: true
+    vulnerability_scanning: true
+    secret_scanning: true
+
+# Monitoring e observabilidade
+observability:
+  metrics:
+    prometheus: true
+    custom_metrics: true
+  endpoint: "/prometheus"
+
+  logging:
+    structured: true
+    format: "JSON"
+    level: "configurable"
+
+  health_checks:
+    liveness: "/healthz"
+    readiness: "/healthz"
+
+# Documentação
+documentation:
+  readme: "README.md"
+  api_docs: "docs/api.md"
+  setup_guide: "docs/setup.md"
+  development: "docs/development.md"
+  deployment: "docs/deployment.md"
+
+  additional:
+    - "docs/sonar-setup.md - Configuração SonarQube"
+    - "docs/mocks.md - Uso do Mockery"
+    - "docs/architecture.md - Arquitetura do projeto"
+
+# Configuração de ferramentas
+tools:
+  mise:
+    config: "mise.toml"
+    tasks: ["setup", "build", "test", "lint", "run-api"]
+
+  pre_commit:
+    hooks: ["golangci-lint", "go fmt", "go vet"]
+
+  editor_config:
+    file: ".editorconfig"
+    standards: "Go conventions"
+
+# Licença e contribuição
+licensing:
+  license: "MIT"
+  file: "LICENSE"
+  commercial_use: true
+  modification: true
+  distribution: true
+
+contribution:
+  guidelines: "CONTRIBUTING.md"
+  code_of_conduct: "CODE_OF_CONDUCT.md"
+  security_policy: "SECURITY.md"
+  issue_template: true
+  pr_template: true
+
+# Tags e classificação
+tags:
+  - "kubernetes"
+  - "metrics"
+  - "prometheus"
+  - "golang"
+  - "api"
+  - "monitoring"
+  - "observability"
+  - "microservice"
+  - "cloud-native"
+  - "devops"
+
+# Status do projeto
+status:
+  development_status: "Active Development"
+  stability: "Beta"
+  maintenance: "Active"
+  last_release: "v1.0.0"
+  next_milestone: "v1.1.0 - Advanced Metrics"
+
+# Métricas do repositório
+repository_metrics:
+  estimated_size: "< 50MB"
+  estimated_lines_of_code: "< 5000"
+  complexity: "Medium"
+  learning_curve: "Intermediate"
+  time_to_setup: "< 30 minutes"
+
+# Links externos
+external_links:
+  documentation: "https://github.com/nataliagranato/k8s-api-metrics/blob/main/README.md"
+  issues: "https://github.com/nataliagranato/k8s-api-metrics/issues"
+  releases: "https://github.com/nataliagranato/k8s-api-metrics/releases"
+  discussions: "https://github.com/nataliagranato/k8s-api-metrics/discussions"
+
+  related_projects:
+    - "https://prometheus.io/ - Sistema de monitoramento"
+    - "https://kubernetes.io/ - Orquestração de containers"
+    - "https://helm.sh/ - Gerenciador de pacotes Kubernetes"

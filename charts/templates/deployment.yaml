@@ -1,0 +1,102 @@
+# k8s-metrics-api-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "k8s-metrics-api.fullname" . }}
+  namespace: {{ .Values.namespace | default .Release.Namespace }}
+  labels:
+    {{- include "k8s-metrics-api.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "k8s-metrics-api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "k8s-metrics-api.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "k8s-metrics-api.serviceAccountName" . }}
+      automountServiceAccountToken: true
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}{{ if .Values.image.digest }}@{{ .Values.image.digest }}{{ end }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PORT # A API Go lê esta variável para definir a porta
+              value: {{ .Values.application.containerPort | quote }}
+            # Mount auth token as file instead of env var for CKV_K8S_35 compliance
+            # The application should read from /etc/secrets/auth-token file
+            # - name: EXPECTED_AUTH_TOKEN # A API Go lê esta variável para o token
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: {{ include "k8s-metrics-api.authTokenSecretName" . }}
+            #       key: {{ .Values.application.authSecretKey }}
+            # Adicione outras variáveis de ambiente necessárias aqui
+            # - name: GIN_MODE
+            #   value: "release"
+          ports:
+            - name: http
+              containerPort: {{ .Values.application.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz # Endpoint de health check da sua API
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            {{- if .Values.securityContext.readOnlyRootFilesystem }}
+            - name: tmp
+              mountPath: /tmp
+            - name: var-tmp
+              mountPath: /var/tmp
+            {{- end }}
+            - name: auth-token
+              mountPath: /etc/secrets
+              readOnly: true
+      volumes:
+        {{- if .Values.securityContext.readOnlyRootFilesystem }}
+        - name: tmp
+          emptyDir: {}
+        - name: var-tmp
+          emptyDir: {}
+        {{- end }}
+        - name: auth-token
+          secret:
+            secretName: {{ include "k8s-metrics-api.authTokenSecretName" . }}
+            items:
+            - key: {{ .Values.application.authSecretKey }}
+              path: auth-token
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

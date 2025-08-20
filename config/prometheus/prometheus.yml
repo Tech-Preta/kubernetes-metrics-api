@@ -1,0 +1,44 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+scrape_configs:
+  # Prometheus próprio
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # k8s-api-metrics
+  - job_name: "k8s-api-metrics"
+    metrics_path: "/prometheus"
+    scheme: http
+    static_configs:
+      - targets: ["k8s-api-metrics:8080"]
+    scrape_interval: 30s
+    basic_auth:
+      username: ""
+      password: "dev-token-123456"
+
+  # Node Exporter
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+
+  # Grafana
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["grafana:3000"]
+
+  # AlertManager
+  - job_name: "alertmanager"
+    static_configs:
+      - targets: ["alertmanager:9093"]

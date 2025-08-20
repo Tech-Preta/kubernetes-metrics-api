@@ -1,0 +1,16 @@
+# Configuração básica do Mockery para geração de mocks
+# Use 'go generate ./...' ou 'mockery --all' para gerar os mocks
+
+# Configurações globais
+disable-version-string: true
+with-expecter: true
+inpackage: false
+testonly: false
+# Configuração por diretório
+# Use as anotações //go:generate nos arquivos de interface para gerar mocks específicos
+# Exemplo: //go:generate mockery --name=InterfaceName --output=./mock --outpkg=packagemock
+
+# Para gerar todos os mocks de uma vez, use:
+# mockery --srcpkg=./internal/k8s --name=KubernetesClient --output=./internal/k8s/mock --outpkg=k8smock
+# mockery --srcpkg=./internal/metrics --name=Registry --output=./internal/metrics/mock --outpkg=metricsmock
+# mockery --srcpkg=./internal/config --name=Provider --output=./internal/config/mock --outpkg=configmock
