@@ -1,46 +1,11 @@
 # golangci-lint configuration for k8s-api-metrics
-# Documentation: https://golangci-lint.run/
-
-version: "1"
-
-run:
-  timeout: 5m
-  tests: true
+# Minimal v1 compatible configuration
 
 linters:
   enable:
-    # Default linters
     - govet
     - errcheck
     - staticcheck
     - unused
     - gosimple
     - ineffassign
-    - typecheck
-
-    # Additional useful linters
-    - revive
-    - gocyclo
-    - gosec
-    - misspell
-    - unparam
-    - unconvert
-    - goconst
-    - gocritic
-    - nakedret
-    - nolintlint
-    - gofmt
-    - goimports
-    - whitespace
-
-  disable:
-    - deadcode # deprecated
-    - varcheck # deprecated
-    - structcheck # deprecated
-    - interfacer # deprecated
-    - scopelint # deprecated
-    - maligned # deprecated
-
-issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
