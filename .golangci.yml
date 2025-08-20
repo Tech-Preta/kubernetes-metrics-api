@@ -1,6 +1,4 @@
-# golangci-lint configuration for k8s-api-metrics
-# Minimal v1 compatible configuration
-
+# Simple working golangci-lint config
 linters:
   enable:
     - govet

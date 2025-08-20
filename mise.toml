@@ -20,12 +20,12 @@ run = 'go build -o bin/main ./cmd'
 
 [tasks.golint]
 description = "Run golangci-lint"
-run = "golangci-lint run --config .golangci.yml"
+run = "golangci-lint run"
 
 [tasks.fmt]
 description = "Format / fix code & swagger fmt"
 run = [
-    "golangci-lint run --fix --config .golangci.yml || true",
+    "golangci-lint run --fix || true",
     "go fmt ./...",
     "(command -v swag >/dev/null || go install github.com/swaggo/swag/cmd/swag@v1.16.6) && swag fmt || true"
 ]
