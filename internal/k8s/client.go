@@ -13,7 +13,7 @@ import (
 
 // Client wrap do clientset Kubernetes.
 type Client struct {
-	Clientset *kubernetes.Clientset
+	Clientset kubernetes.Interface
 }
 
 // NewClient cria client in-cluster ou via kubeconfig.
